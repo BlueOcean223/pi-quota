@@ -51,6 +51,7 @@ The interface is in Chinese.
 | `api.moonshot.cn`, `api.moonshot.ai` | Balance |
 | `openrouter.ai` | Account credits and the key's own limit |
 | `api.siliconflow.cn`, `.com` | Balance |
+| `opencode.ai/zen/go` (OpenCode Go) | 5-hour, 7-day and monthly windows |
 
 **Relays and aggregators**: a provider with its own `baseUrl` in models.json is probed in this order:
 
@@ -66,30 +67,40 @@ Providers that cannot be queried are listed with the reason: ordinary Anthropic,
 
 NewAPI tokens are often created with unlimited quota. The token then has no cap of its own and the real cap is the account balance.
 
-Sites that turn off per-token stats report the account to the API key, and the balance shows with nothing to configure. Most sites leave them on. There, create a system access token under the NewAPI console's personal settings and add it to `quota.json` in pi's agent directory:
+Sites that turn off per-token stats report the account to the API key, and the balance shows with nothing to configure. Most sites leave them on, and their row then says to press `c`: create a system access token under the NewAPI console's personal settings and paste it in. The token is checked against the site before it is saved; a site old enough to want the user id as well is asked for it next. The panel refreshes once the token is saved.
+
+The token is stored by site host in `quota.json` in pi's agent directory, shared by every provider on that site and readable only by you (0600), as pi's auth.json is. It can also be written by hand, for example to keep it in the keychain:
 
 ```jsonc
 // ~/.pi/agent/quota.json
 {
-  "providers": {
-    "tw-codex": {
+  "sites": {
+    "new-api.example.com": {
       "accessToken": "!security find-generic-password -ws newapi",  // or "$ENV_NAME", or the literal token
-      "userId": 1234                                               // only builds from before mid-2026 need it: the user id the console shows
+      "userId": 1234                                               // only builds from before mid-2026 need it
     }
   }
 }
 ```
 
-A system access token can manage the whole account, not just read the balance, so keep it in the keychain or an environment variable rather than in plain text.
+`accessToken` resolves like `apiKey` in models.json: a leading `!` runs a command and takes its output, `$NAME` reads an environment variable, anything else is literal. A system access token can manage the whole account, not just read the balance, so keep it out of anything that gets synced or committed.
 
-`accessToken` resolves like `apiKey` in models.json: a leading `!` runs a command and takes its output, `$NAME` reads an environment variable, anything else is literal.
+## quota.json
 
-Other `quota.json` fields:
+`sites` applies to every provider whose requests go to a host; `providers` applies to one provider id and wins over its site. Both take the same fields:
 
 | Field | Effect |
 | --- | --- |
-| `type` | Force a source: `newapi`, `sub2api`, `billing`, `relay` (auto-probe), `deepseek`, `zai`, … ; `"off"` leaves the provider out |
+| `type` | Force a source: `newapi`, `sub2api`, `billing`, `relay` (auto-probe), `deepseek`, `zai`, … ; `"off"` leaves it out |
+| `accessToken`, `userId` | NewAPI account balance, as above |
 | `baseUrl` | Query a different origin when the quota API is not on the request host |
+
+```jsonc
+{
+  "sites": { "anyrouter.top": { "type": "off" } },   // every provider on this site
+  "providers": { "local-llm": { "type": "off" } }     // just this one
+}
+```
 
 Press `r` after editing; the file is read again on every run.
 
@@ -99,6 +110,7 @@ Press `r` after editing; the file is read again on every run.
 | --- | --- |
 | `Esc` / `Enter` / `Space` / `q` | Close (requests still in flight are cancelled) |
 | `r` | Query again |
+| `c` | Fill in a system access token for a NewAPI site that needs one (shown only when one does) |
 | `↑` / `↓`, `PgUp` / `PgDn` | Scroll when the panel does not fit |
 
 ## Install
@@ -119,7 +131,7 @@ pi --extension ./index.ts
 - **Works outside the TUI.** `pi -p /quota` prints to stdout; `json` mode prints to stderr so the event stream stays intact; `rpc` mode sends it as a notification.
 - **Claude's usage endpoint is rate limited.** Refreshing in quick succession can return 429; wait a bit.
 - **NewAPI amounts follow the site's own settings.** When a site does not expose `/api/status`, the stock 500000 points = $1 is assumed and the panel says so.
-- **Read-only.** Every request is a GET; nothing about any account or config is changed.
+- **Read-only towards accounts.** Every request is a GET; no account is changed. The one file it writes is `quota.json`, when a token is saved with `c`; `//` comments in it are lost, and it asks before that happens.
 
 ## Development
 

@@ -49,6 +49,7 @@ Esc 关闭  ·  r 刷新
 | `api.moonshot.cn`、`api.moonshot.ai` | 余额 |
 | `openrouter.ai` | 账户 credits、key 自己的限额 |
 | `api.siliconflow.cn`、`.com` | 余额 |
+| `opencode.ai/zen/go`（OpenCode Go） | 5 小时、7 天、本月窗口 |
 
 **中转站 / 聚合平台**：models.json 里自定义 `baseUrl` 的 provider，按顺序探测：
 
@@ -64,30 +65,40 @@ Esc 关闭  ·  r 刷新
 
 NewAPI 的令牌经常设成"无限额度"。这时令牌本身没有上限，真正的上限是账户余额。
 
-站点关掉了"按令牌统计"时，用 API key 就能查到账户余额，什么都不用配。大多数站点开着这个选项，这时要在 NewAPI 控制台「个人设置」里生成一个系统访问令牌，写进 pi 配置目录下的 `quota.json`：
+站点关掉了"按令牌统计"时，用 API key 就能查到账户余额，什么都不用配。大多数站点开着这个选项，这时那一行会提示"按 c 填写访问令牌"：在 NewAPI 控制台「个人设置」里生成一个系统访问令牌，在面板里按 `c` 粘贴进去。令牌会先拿到站点上验证，通过了才保存；站点版本较旧、还要用户 ID 的，会接着问。保存后面板自动刷新。
+
+令牌按站点域名存进 pi 配置目录下的 `quota.json`，这个站点上的所有 provider 共用，和 pi 的 auth.json 一样只有你自己能读（0600）。也可以手动写，比如放进钥匙串：
 
 ```jsonc
 // ~/.pi/agent/quota.json
 {
-  "providers": {
-    "tw-codex": {
+  "sites": {
+    "new-api.example.com": {
       "accessToken": "!security find-generic-password -ws newapi",  // 也可以是 "$ENV_NAME" 或明文
-      "userId": 1234                                               // 只有 2026 年中以前的版本要，控制台里显示的用户 ID
+      "userId": 1234                                               // 只有 2026 年中以前的版本要
     }
   }
 }
 ```
 
-系统访问令牌能管理整个账户，不只是读余额，所以建议放在钥匙串或环境变量里，不要写明文。
+`accessToken` 的写法和 models.json 的 `apiKey` 一样：`!` 开头执行命令取输出，`$NAME` 读环境变量，其他当明文。系统访问令牌能管理整个账户，不只是读余额，所以别把它放进会同步或提交的地方。
 
-`accessToken` 的写法和 models.json 的 `apiKey` 一样：`!` 开头执行命令取输出，`$NAME` 读环境变量，其他当明文。
+## quota.json
 
-`quota.json` 里还能写：
+`sites` 按请求发往的域名配置，对这个域名上的所有 provider 生效；`providers` 按 provider id 配置，只对这一个生效，并且优先于 `sites`。两边能写的字段一样：
 
 | 字段 | 作用 |
 | --- | --- |
-| `type` | 指定用哪种方式查：`newapi`、`sub2api`、`billing`、`relay`（自动探测）、`deepseek`、`zai` 等；`"off"` 不查这个 provider |
+| `type` | 指定用哪种方式查：`newapi`、`sub2api`、`billing`、`relay`（自动探测）、`deepseek`、`zai` 等；`"off"` 不查 |
+| `accessToken`、`userId` | NewAPI 的账户余额，见上一节 |
 | `baseUrl` | 额度接口和请求接口不在一个域名时，单独指定 |
+
+```jsonc
+{
+  "sites": { "anyrouter.top": { "type": "off" } },   // 这个站点上的 provider 都不查
+  "providers": { "local-llm": { "type": "off" } }     // 只有这一个不查
+}
+```
 
 改完按 `r` 就会重新读取。
 
@@ -97,6 +108,7 @@ NewAPI 的令牌经常设成"无限额度"。这时令牌本身没有上限，�
 | --- | --- |
 | `Esc` / `Enter` / `Space` / `q` | 关闭（还没返回的请求会取消） |
 | `r` | 重新查询 |
+| `c` | 给需要的 NewAPI 站点填系统访问令牌（有这样的站点时才出现） |
 | `↑` / `↓`、`PgUp` / `PgDn` | 内容超出屏幕时滚动 |
 
 ## 安装
@@ -117,7 +129,7 @@ pi --extension ./index.ts
 - **非交互模式也能用。** `pi -p /quota` 把结果打到 stdout；`json` 模式打到 stderr，不打乱事件流；`rpc` 模式作为一条通知发出去。
 - **Claude 的额度接口有限流**，连着刷新可能返回 429，等一会儿再查。
 - **NewAPI 的金额按站点自己的设置换算。** 站点没公开 `/api/status` 时，按默认的 500000 点 = $1 换算，面板上会注明。
-- **只读。** 所有请求都是 GET，不会改动任何账户或配置。
+- **对账户只读。** 所有请求都是 GET，不会改动任何账户。唯一会写的文件是按 `c` 保存访问令牌时的 `quota.json`；文件里原有的 `//` 注释会丢，保存前会先问。
 
 ## 开发
 
