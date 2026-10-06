@@ -62,19 +62,23 @@ Esc 关闭  ·  r 刷新
 
 ## NewAPI 的账户余额
 
-NewAPI 的令牌经常设成"无限额度"。这时令牌本身没有上限，真正的上限是账户余额，而 API key 查不到账户余额。要查的话，在 NewAPI 控制台「个人设置」里生成一个系统访问令牌，写进 pi 配置目录下的 `quota.json`：
+NewAPI 的令牌经常设成"无限额度"。这时令牌本身没有上限，真正的上限是账户余额。
+
+站点关掉了"按令牌统计"时，用 API key 就能查到账户余额，什么都不用配。大多数站点开着这个选项，这时要在 NewAPI 控制台「个人设置」里生成一个系统访问令牌，写进 pi 配置目录下的 `quota.json`：
 
 ```jsonc
 // ~/.pi/agent/quota.json
 {
   "providers": {
     "tw-codex": {
-      "userId": 1234,                                         // 控制台里显示的用户 ID
-      "accessToken": "!security find-generic-password -ws newapi"  // 也可以是 "$ENV_NAME" 或明文
+      "accessToken": "!security find-generic-password -ws newapi",  // 也可以是 "$ENV_NAME" 或明文
+      "userId": 1234                                               // 只有 2026 年中以前的版本要，控制台里显示的用户 ID
     }
   }
 }
 ```
+
+系统访问令牌能管理整个账户，不只是读余额，所以建议放在钥匙串或环境变量里，不要写明文。
 
 `accessToken` 的写法和 models.json 的 `apiKey` 一样：`!` 开头执行命令取输出，`$NAME` 读环境变量，其他当明文。
 

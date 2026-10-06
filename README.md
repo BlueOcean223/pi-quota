@@ -64,19 +64,23 @@ Providers that cannot be queried are listed with the reason: ordinary Anthropic,
 
 ## NewAPI account balance
 
-NewAPI tokens are often created with unlimited quota. The token then has no cap of its own, the real cap is the account balance, and the API key cannot read the account. To show it, create a system access token under the NewAPI console's personal settings and add it to `quota.json` in pi's agent directory:
+NewAPI tokens are often created with unlimited quota. The token then has no cap of its own and the real cap is the account balance.
+
+Sites that turn off per-token stats report the account to the API key, and the balance shows with nothing to configure. Most sites leave them on. There, create a system access token under the NewAPI console's personal settings and add it to `quota.json` in pi's agent directory:
 
 ```jsonc
 // ~/.pi/agent/quota.json
 {
   "providers": {
     "tw-codex": {
-      "userId": 1234,                                          // the user id the console shows
-      "accessToken": "!security find-generic-password -ws newapi"  // or "$ENV_NAME", or the literal token
+      "accessToken": "!security find-generic-password -ws newapi",  // or "$ENV_NAME", or the literal token
+      "userId": 1234                                               // only builds from before mid-2026 need it: the user id the console shows
     }
   }
 }
 ```
+
+A system access token can manage the whole account, not just read the balance, so keep it in the keychain or an environment variable rather than in plain text.
 
 `accessToken` resolves like `apiKey` in models.json: a leading `!` runs a command and takes its output, `$NAME` reads an environment variable, anything else is literal.
 
