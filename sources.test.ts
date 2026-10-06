@@ -12,7 +12,7 @@ import { copilot, parseCopilotUsage } from "./sources/copilot.js";
 import { parseKimiUsage, usageUrl } from "./sources/kimi.js";
 import { parseMinimaxRemains } from "./sources/minimax.js";
 import { opencodeGo, parseOpencodeGoUsage } from "./sources/opencode.js";
-import { parseSub2api, parseTokenUsage, quotaAmount, relay, unitFromStatus } from "./sources/relay.js";
+import { checkAccount, NeedsUserId, parseSub2api, parseTokenUsage, quotaAmount, relay, unitFromStatus } from "./sources/relay.js";
 import { grok, parseGrokBilling } from "./sources/grok.js";
 import { zai } from "./sources/zai.js";
 import type { Http, HttpResult, Target } from "./types.js";
@@ -367,7 +367,8 @@ describe("relay probe", () => {
 		const report = await relay.fetch(target({ provider: "tw-codex" }), http);
 		expect(report.plan).toBe("NewAPI");
 		expect(report.balances).toEqual([{ label: "令牌 pi", value: "unlimited", detail: "已用 ¥130.90" }]);
-		expect(report.notes.map((n) => n.text)).toEqual(["令牌不限额，要看账户余额，在 quota.json 给 tw-codex 配 accessToken"]);
+		expect(report.notes).toEqual([]);
+		expect(report.setup).toEqual({ site: "relay.example.com", origin: "https://relay.example.com" });
 	});
 
 	test("reads the account balance with the key alone when the site bills by account", async () => {
@@ -393,8 +394,19 @@ describe("relay probe", () => {
 			...routes,
 			"https://relay.example.com/api/user/self": json({ success: false, message: "无权进行此操作，未提供 New-Api-User" }),
 		});
-		const notes = (await relay.fetch(target({ settings: { accessToken: "dash-token" } }), old.http)).notes;
-		expect(notes).toContainEqual({ text: "账户余额：无权进行此操作，未提供 New-Api-User（这个站点的版本还要在 quota.json 配 userId）", tone: "warning" });
+		const report2 = await relay.fetch(target({ settings: { accessToken: "dash-token" } }), old.http);
+		expect(report2.setup).toEqual({
+			site: "relay.example.com",
+			origin: "https://relay.example.com",
+			problem: "无权进行此操作，未提供 New-Api-User（这个站点的版本还要用户 ID）",
+		});
+		await expect(checkAccount(old.http, "https://relay.example.com", "dash-token")).rejects.toBeInstanceOf(NeedsUserId);
+	});
+
+	test("a configured token that resolves to nothing asks for a new one", async () => {
+		const { http } = fakeHttp({ "https://relay.example.com/api/usage/token/": tokenUsage, "https://relay.example.com/api/status": status });
+		const report = await relay.fetch(target({ settings: { accessToken: "$PI_QUOTA_TEST_UNSET" } }), http);
+		expect(report.setup?.problem).toBe("quota.json 里的 accessToken 解析出来是空的");
 	});
 
 	test("adds the account balance with an access token and user id", async () => {

@@ -3,10 +3,10 @@
  * left, for every provider pi has credentials for.
  *
  * `/quota` asks all of them at once; `/quota <provider>` asks one. Logged-in
- * subscriptions (Claude Pro/Max, ChatGPT, Copilot, Kimi) report their rate
- * windows; API keys report balances where the vendor has an endpoint for it;
- * custom providers in models.json are probed as NewAPI, Sub2API or
- * OpenAI-compatible relays.
+ * subscriptions (Claude Pro/Max, ChatGPT, Copilot, Kimi, SuperGrok) report
+ * their rate windows; API keys report balances, or a plan's windows, where the
+ * vendor has an endpoint for it; custom providers in models.json are probed
+ * as NewAPI, Sub2API or OpenAI-compatible relays.
  *
  * It is a command and not a tool, so only the user can run it, and the answer
  * goes to the panel or the terminal, never into the session: the model does
@@ -17,9 +17,10 @@
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
 import { loadConfig } from "./config.js";
 import { createHttp } from "./http.js";
-import { createPanel } from "./panel.js";
+import { createPanel, type PanelResult } from "./panel.js";
 import { type QueryState, startQuery } from "./query.js";
 import { bodyLines, headerLine, plainStyle } from "./render.js";
+import { runSetup } from "./setup.js";
 import { type CandidateContext, providerIds } from "./targets.js";
 
 const PLAIN_WIDTH = 100;
@@ -79,18 +80,24 @@ async function showPanel(ctx: ExtensionCommandContext, only: string | undefined)
 	let state = start();
 
 	try {
-		await ctx.ui.custom<void>(
-			createPanel({
-				state: () => state,
-				subscribe: (onChange) => {
-					listeners.add(onChange);
-					return () => listeners.delete(onChange);
-				},
-				refresh: () => {
-					state = start();
-				},
-			}),
-		);
+		// `c` leaves the panel to ask for a credential, then comes back to it:
+		// with a fresh query when one was saved, as it was otherwise.
+		for (;;) {
+			const result = await ctx.ui.custom<PanelResult>(
+				createPanel({
+					state: () => state,
+					subscribe: (onChange) => {
+						listeners.add(onChange);
+						return () => listeners.delete(onChange);
+					},
+					refresh: () => {
+						state = start();
+					},
+				}),
+			);
+			if (!result) return;
+			if (await runSetup(ctx, result.setup, createHttp())) state = start();
+		}
 	} finally {
 		controller.abort();
 	}

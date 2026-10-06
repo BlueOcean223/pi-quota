@@ -4,13 +4,15 @@
  *
  * It owns the keyboard while it is up. Escape, Enter, Space and `q` all close
  * it, so the way back to the editor is whatever the reader reaches for first.
- * Closing aborts any request still in flight.
+ * `c` closes it with the rows that want a credential, for the command to ask
+ * for one and open the panel again.
  */
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, type KeybindingsManager, Key, matchesKey, parseKey, type TUI, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import type { QueryState } from "./query.js";
 import { bodyLines, headerLine } from "./render.js";
+import type { AccountSetup } from "./types.js";
 
 /**
  * Rows pi keeps for itself while the panel is up: the transcript row
@@ -31,12 +33,31 @@ export interface PanelDeps {
 	refresh(): void;
 }
 
+/** A row that wants a NewAPI access token, with the providers it stands for. */
+export interface SetupRequest {
+	setup: AccountSetup;
+	providers: string[];
+	names: string[];
+}
+
+/** Undefined when the panel was simply closed. */
+export type PanelResult = { setup: SetupRequest[] } | undefined;
+
+export function setupRequests(state: QueryState): SetupRequest[] {
+	const requests: SetupRequest[] = [];
+	for (const row of state.rows) {
+		const setup = row.state.kind === "ok" ? row.state.report.setup : undefined;
+		if (setup) requests.push({ setup, providers: row.providers, names: row.names });
+	}
+	return requests;
+}
+
 export function bodyHeight(terminalRows: number): number {
 	return Math.max(MIN_BODY_ROWS, terminalRows - HOST_ROWS - CHROME_ROWS);
 }
 
 export function createPanel(deps: PanelDeps) {
-	return (tui: TUI, theme: Theme, keybindings: KeybindingsManager, done: (result: void) => void): Component & { dispose(): void } => {
+	return (tui: TUI, theme: Theme, keybindings: KeybindingsManager, done: (result: PanelResult) => void): Component & { dispose(): void } => {
 		let scroll = 0;
 		let bodyRows = MIN_BODY_ROWS;
 		let bodyCount = 0;
@@ -69,6 +90,7 @@ export function createPanel(deps: PanelDeps) {
 
 		function hintRow(width: number): string {
 			const hints = ["Esc 关闭", "r 刷新"];
+			if (setupRequests(deps.state()).length > 0) hints.push("c 填访问令牌");
 			if (bodyCount > bodyRows) hints.push("↑↓ 滚动", `${scroll + 1}-${Math.min(bodyCount, scroll + bodyRows)}/${bodyCount}`);
 			let row = "";
 			for (const hint of hints) {
@@ -86,7 +108,7 @@ export function createPanel(deps: PanelDeps) {
 			cachedRows = rows;
 
 			const state = deps.state();
-			const body = bodyLines(state, width, theme);
+			const body = bodyLines(state, width, theme, Date.now(), true);
 			bodyCount = body.length;
 			bodyRows = bodyHeight(rows);
 			scroll = Math.min(scroll, Math.max(0, body.length - bodyRows));
@@ -123,7 +145,12 @@ export function createPanel(deps: PanelDeps) {
 					redraw();
 					return;
 				}
-				if (isCancel(data) || isConfirm(data) || key === "q" || matchesKey(data, Key.space)) done();
+				if (key === "c") {
+					const setup = setupRequests(deps.state());
+					if (setup.length > 0) done({ setup });
+					return;
+				}
+				if (isCancel(data) || isConfirm(data) || key === "q" || matchesKey(data, Key.space)) done(undefined);
 			},
 		};
 	};

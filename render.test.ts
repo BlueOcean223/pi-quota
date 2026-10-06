@@ -5,7 +5,7 @@
 
 import { describe, expect, test } from "bun:test";
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { bodyHeight, createPanel, HOST_ROWS } from "./panel.js";
+import { bodyHeight, createPanel, HOST_ROWS, type PanelResult } from "./panel.js";
 import type { QueryState, Row } from "./query.js";
 import { bodyLines, headerLine, plainStyle } from "./render.js";
 import { SOURCES } from "./sources/index.js";
@@ -107,6 +107,32 @@ describe("bodyLines", () => {
 });
 
 describe("headerLine", () => {
+	test("a row that wants an access token says where to give it", () => {
+		const setupRow = (problem?: string) =>
+			row({
+				source: SOURCES.relay!,
+				providers: ["tw-codex"],
+				names: ["tw-codex"],
+				host: "relay.example.com",
+				auth: "api_key",
+				state: {
+					kind: "ok",
+					report: {
+						plan: "NewAPI",
+						meters: [],
+						balances: [{ label: "令牌 pi", value: "unlimited" }],
+						notes: [],
+						setup: { site: "relay.example.com", origin: "https://relay.example.com", ...(problem ? { problem } : {}) },
+					},
+				},
+			});
+		expect(bodyLines(state([setupRow()]), 100, plainStyle, NOW, true).at(-1)).toBe("  令牌不限额，按 c 填写访问令牌就能看账户余额");
+		expect(bodyLines(state([setupRow()]), 100, plainStyle, NOW).at(-1)).toBe("  令牌不限额，在 /quota 面板按 c 填写访问令牌就能看账户余额");
+		expect(bodyLines(state([setupRow("NewAPI 拒绝了凭据（HTTP 401）")]), 100, plainStyle, NOW, true).at(-1)).toBe(
+			"  ! 账户余额：NewAPI 拒绝了凭据（HTTP 401），按 c 重新填写访问令牌",
+		);
+	});
+
 	test("counts answers while they come in", () => {
 		const rows = [row({ state: { kind: "ok", report: { meters: [], balances: [], notes: [] } } }), row({})];
 		expect(headerLine(state(rows, { phase: "fetching" }), plainStyle)).toBe("额度 · 查询中 1/2");
@@ -120,17 +146,19 @@ const theme = { fg: (_color: string, text: string) => text, bold: (text: string)
 
 function mountPanel(current: () => QueryState, rows = 30) {
 	let closed = false;
+	let result: PanelResult;
 	let refreshed = 0;
 	const tui = { terminal: { rows }, requestRender: () => {} };
 	const panel = createPanel({ state: current, subscribe: () => () => {}, refresh: () => refreshed++ })(
 		tui as never,
 		theme as never,
 		undefined as never,
-		() => {
+		(value) => {
 			closed = true;
+			result = value;
 		},
 	);
-	return { panel, closed: () => closed, refreshed: () => refreshed };
+	return { panel, closed: () => closed, result: () => result, refreshed: () => refreshed };
 }
 
 describe("panel", () => {
@@ -155,12 +183,30 @@ describe("panel", () => {
 		expect(panel.render(80)[2]).not.toBe(first[2]);
 	});
 
+	test("c hands back the rows that want an access token, and does nothing when none do", () => {
+		const setup = { site: "relay.example.com", origin: "https://relay.example.com" };
+		const wanting = state([
+			row({ providers: ["tw-anthropic", "tw-codex"], names: ["tw-anthropic", "tw-codex"], state: { kind: "ok", report: { meters: [], balances: [], notes: [], setup } } }),
+		]);
+		const { panel, closed, result } = mountPanel(() => wanting);
+		expect(panel.render(100).at(-1)).toContain("c 填访问令牌");
+		panel.handleInput!("c");
+		expect(result()).toEqual({ setup: [{ setup, providers: ["tw-anthropic", "tw-codex"], names: ["tw-anthropic", "tw-codex"] }] });
+
+		const idle = mountPanel(() => state([]));
+		expect(idle.panel.render(100).at(-1)).not.toContain("c 填");
+		idle.panel.handleInput!("c");
+		expect(idle.closed()).toBe(false);
+		expect(closed()).toBe(true);
+	});
+
 	test("r refreshes and Escape closes", () => {
-		const { panel, closed, refreshed } = mountPanel(() => state([]));
+		const { panel, closed, result, refreshed } = mountPanel(() => state([]));
 		panel.handleInput!("r");
 		expect(refreshed()).toBe(1);
 		expect(closed()).toBe(false);
 		panel.handleInput!("\x1b");
 		expect(closed()).toBe(true);
+		expect(result()).toBeUndefined();
 	});
 });

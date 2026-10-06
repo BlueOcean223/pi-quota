@@ -7,7 +7,7 @@ import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { barCells, formatAmount, formatClock, formatPercent, formatReset, usageLevel } from "./format.js";
 import type { QueryState, Row } from "./query.js";
 import { RELAY_SOURCES } from "./sources/index.js";
-import type { Balance, Meter, Report } from "./types.js";
+import type { AccountSetup, Balance, Meter, Report } from "./types.js";
 
 export type StyleColor = "accent" | "muted" | "dim" | "success" | "warning" | "error" | "text";
 
@@ -32,13 +32,14 @@ export function headerLine(state: QueryState, style: Style): string {
 	return `${title}${style.fg("dim", ` · ${total} 项${at}`)}`;
 }
 
-export function bodyLines(state: QueryState, width: number, style: Style, now = Date.now()): string[] {
+/** `interactive` is the panel, where `c` opens the setup the hint lines mention. */
+export function bodyLines(state: QueryState, width: number, style: Style, now = Date.now(), interactive = false): string[] {
 	const lines: string[] = [];
 	for (const note of state.notes) lines.push(style.fg("warning", `! ${note}`));
 
 	state.rows.forEach((row, index) => {
 		if (index > 0 || lines.length > 0) lines.push("");
-		lines.push(...rowLines(row, width, style, now));
+		lines.push(...rowLines(row, width, style, now, interactive));
 	});
 
 	if (state.skipped.length > 0) {
@@ -54,7 +55,7 @@ export function bodyLines(state: QueryState, width: number, style: Style, now = 
 	return lines.map((line) => (visibleWidth(line) > width ? truncateToWidth(line, width) : line));
 }
 
-export function rowLines(row: Row, width: number, style: Style, now = Date.now()): string[] {
+export function rowLines(row: Row, width: number, style: Style, now = Date.now(), interactive = false): string[] {
 	// A custom display name hides the id `/quota <provider>` takes, so show both.
 	const names = row.names
 		.map((name, i) => {
@@ -75,7 +76,7 @@ export function rowLines(row: Row, width: number, style: Style, now = Date.now()
 		return lines;
 	}
 
-	const { meters, balances, notes } = row.state.report;
+	const { meters, balances, notes, setup } = row.state.report;
 	const labelWidth = Math.max(0, ...meters.map((m) => visibleWidth(m.label)), ...balances.map((b) => visibleWidth(b.label)));
 	const barWidth = width >= 90 ? 20 : width >= 64 ? 12 : 8;
 	for (const meter of meters) lines.push(meterLine(meter, labelWidth, barWidth, style, now));
@@ -83,10 +84,22 @@ export function rowLines(row: Row, width: number, style: Style, now = Date.now()
 	for (const note of notes) {
 		lines.push(note.tone === "warning" ? style.fg("warning", `  ! ${note.text}`) : style.fg("dim", `  ${note.text}`));
 	}
-	if (meters.length === 0 && balances.length === 0 && notes.length === 0) {
+	if (setup) lines.push(setupLine(setup, style, interactive));
+	if (meters.length === 0 && balances.length === 0 && notes.length === 0 && !setup) {
 		lines.push(style.fg("dim", "  没有返回额度数据"));
 	}
 	return lines;
+}
+
+function setupLine(setup: AccountSetup, style: Style, interactive: boolean): string {
+	// Segments side by side: a color nested inside another ends both at its reset.
+	const key = interactive
+		? `${style.fg("dim", "按 ")}${style.fg("accent", "c")}${style.fg("dim", " ")}`
+		: style.fg("dim", "在 /quota 面板按 c ");
+	if (setup.problem) {
+		return `${style.fg("warning", `  ! 账户余额：${setup.problem}`)}${style.fg("dim", "，")}${key}${style.fg("dim", "重新填写访问令牌")}`;
+	}
+	return `${style.fg("dim", "  令牌不限额，")}${key}${style.fg("dim", "填写访问令牌就能看账户余额")}`;
 }
 
 function subtitle(row: Row, report: Report | undefined): string {

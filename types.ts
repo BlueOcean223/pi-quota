@@ -70,11 +70,25 @@ export interface Note {
 	tone: "muted" | "warning";
 }
 
+/**
+ * A NewAPI account balance the source could show with a system access token
+ * it does not have, or has and was refused with.
+ */
+export interface AccountSetup {
+	/** The quota.json `sites` key the token goes under. */
+	site: string;
+	/** Where to check a token before saving it. */
+	origin: string;
+	/** Why the configured token did not work, when one is configured. */
+	problem?: string;
+}
+
 export interface Report {
 	plan?: string;
 	meters: Meter[];
 	balances: Balance[];
 	notes: Note[];
+	setup?: AccountSetup;
 }
 
 export interface Http {

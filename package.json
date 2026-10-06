@@ -34,6 +34,7 @@
 		"panel.ts",
 		"query.ts",
 		"render.ts",
+		"setup.ts",
 		"targets.ts",
 		"types.ts",
 		"sources/*.ts",

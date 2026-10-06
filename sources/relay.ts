@@ -184,21 +184,25 @@ export function parseTokenUsage(data: Record<string, unknown>, unit: SiteUnit, n
 /**
  * Add the account balance: from the access token in `quota.json` when there is
  * one, else from the billing endpoints when the site reports the account
- * there, else say how to get it.
+ * there. Otherwise, or when the token is refused, the report says what it
+ * would take, and the panel offers to take it.
  */
 async function finishNewapi(http: Http, origin: string, target: Target, report: Report, unit: SiteUnit): Promise<Report> {
-	if (target.settings.accessToken) {
+	const configured = target.settings.accessToken;
+	if (configured) {
 		try {
-			report.balances.unshift(await accountBalance(http, origin, target, unit));
+			const token = resolveConfigValue(configured);
+			if (!token) throw new QuotaError("quota.json 里的 accessToken 解析出来是空的");
+			report.balances.unshift(await accountBalance(http, origin, token, target.settings.userId, unit));
 		} catch (error) {
-			report.notes.push({ text: `账户余额：${error instanceof Error ? error.message : String(error)}`, tone: "warning" });
+			report.setup = { site: target.site, origin, problem: error instanceof Error ? error.message : String(error) };
 		}
 		return report;
 	}
 	if (!report.balances.some((balance) => balance.value === "unlimited")) return report;
 	const account = await billingAccount(http, origin, bearer(target), unit).catch(() => undefined);
 	if (account) report.balances.unshift(account);
-	else report.notes.push({ text: `令牌不限额，要看账户余额，在 quota.json 给 ${target.provider} 配 accessToken`, tone: "muted" });
+	else report.setup = { site: target.site, origin };
 	return report;
 }
 
@@ -225,17 +229,25 @@ async function billingAccount(http: Http, origin: string, key: string, unit: Sit
 	};
 }
 
-async function accountBalance(http: Http, origin: string, target: Target, unit: SiteUnit): Promise<Balance> {
-	const token = resolveConfigValue(target.settings.accessToken);
-	if (!token) throw new QuotaError("accessToken 解析出来是空的");
+/** The site wants the user id next to the access token, and none was given. */
+export class NeedsUserId extends QuotaError {
+	override name = "NeedsUserId";
+}
+
+/** Check a system access token the way a query would use it, for saving it from the panel. */
+export async function checkAccount(http: Http, origin: string, token: string, userId?: number | string): Promise<Balance> {
+	return accountBalance(http, origin, token, userId, await siteUnit(http, origin));
+}
+
+async function accountBalance(http: Http, origin: string, token: string, userId: number | string | undefined, unit: SiteUnit): Promise<Balance> {
 	const headers: Record<string, string> = { authorization: `Bearer ${token}` };
 	// Builds before mid-2026 refuse an access token without the matching user id.
-	if (target.settings.userId !== undefined) headers["new-api-user"] = String(target.settings.userId);
+	if (userId !== undefined) headers["new-api-user"] = String(userId);
 	const body = expectJson(await http.getJson(`${origin}/api/user/self`, { headers }), "NewAPI ");
 	if (body.success !== true) {
 		const message = str(body.message) ?? "查询账户失败";
-		const needsUser = /new-api-user/i.test(message) && target.settings.userId === undefined;
-		throw new QuotaError(needsUser ? `${message}（这个站点的版本还要在 quota.json 配 userId）` : message);
+		if (/new-api-user/i.test(message) && userId === undefined) throw new NeedsUserId(`${message}（这个站点的版本还要用户 ID）`);
+		throw new QuotaError(message);
 	}
 	const data = obj(body.data);
 	const quota = num(data?.quota);
