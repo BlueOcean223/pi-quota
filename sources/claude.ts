@@ -1,10 +1,13 @@
 /**
  * Claude Pro/Max: the same endpoint Claude Code's `/usage` reads.
  *
- * `utilization` is already a percent. Windows the plan does not have come back
- * as null. Newer responses also carry a flat `limits` list whose scoped entries
- * name the model they apply to; those are shown when the flat fields did not
- * already cover them.
+ * `five_hour` and `seven_day` are the two windows every plan has, with
+ * `utilization` already a percent. Either comes back null before anything
+ * has been used in it; as in Claude Code, that is 0%. The one model with a
+ * weekly limit of its own, Fable, is an entry of the `limits` list, shaped
+ * `{ kind: "weekly_scoped", scope: { model: { display_name: "Fable" } }, percent }`.
+ * Other entries there, and the older `seven_day_opus` style fields, describe
+ * limits that no longer apply and are left out.
  */
 
 import { arr, epochMs, expectJson, num, obj, str } from "../http.js";
@@ -18,9 +21,6 @@ const CLAUDE_CLI_VERSION = "2.1.280";
 const WINDOWS: Array<[key: string, label: string]> = [
 	["five_hour", "5 小时"],
 	["seven_day", "7 天"],
-	["seven_day_opus", "7 天 · Opus"],
-	["seven_day_sonnet", "7 天 · Sonnet"],
-	["seven_day_oauth_apps", "7 天 · 第三方应用"],
 ];
 
 export const claude: Source = {
@@ -41,25 +41,20 @@ export const claude: Source = {
 
 export function parseClaudeUsage(body: Record<string, unknown>): Report {
 	const report = emptyReport();
-	const seen = new Set<string>();
-	for (const [key, label] of WINDOWS) {
-		const window = obj(body[key]);
-		const used = num(window?.utilization);
-		if (used === undefined) continue;
-		report.meters.push(meter(label, used, window?.resets_at));
-		seen.add(label);
+	const windows = WINDOWS.map(([key, label]) => ({ label, window: obj(body[key]) }));
+	if (windows.some(({ window }) => num(window?.utilization) !== undefined)) {
+		for (const { label, window } of windows) report.meters.push(meter(label, num(window?.utilization) ?? 0, window?.resets_at));
 	}
 
-	for (const raw of arr(body.limits)) {
-		const limit = obj(raw);
-		const used = num(limit?.percent);
-		if (!limit || used === undefined || limit.is_active === false) continue;
-		const model = str(obj(obj(limit.scope)?.model)?.display_name);
-		if (!model) continue;
-		const label = `7 天 · ${model}`;
-		if (seen.has(label)) continue;
-		report.meters.push(meter(label, used, limit.resets_at));
-		seen.add(label);
+	const fable = arr(body.limits)
+		.map(obj)
+		.find((limit) => {
+			const model = str(obj(obj(limit?.scope)?.model)?.display_name);
+			return limit?.kind === "weekly_scoped" && model?.toLowerCase().startsWith("fable") && num(limit.percent) !== undefined;
+		});
+	if (fable) {
+		const model = str(obj(obj(fable.scope)?.model)?.display_name)!;
+		report.meters.push(meter(`7 天 · ${model}`, num(fable.percent)!, fable.resets_at));
 	}
 
 	const extra = obj(body.extra_usage);

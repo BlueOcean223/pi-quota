@@ -40,7 +40,7 @@ describe("bodyLines", () => {
 							plan: "max",
 							meters: [
 								{ label: "5 小时", usedPercent: 42, resetsAt: NOW + 133 * 60_000 },
-								{ label: "7 天 · Opus", usedPercent: 95 },
+								{ label: "7 天 · Fable", usedPercent: 95 },
 							],
 							balances: [{ label: "额外用量", value: { value: 37.5, unit: "USD" } }],
 							notes: [],
@@ -53,9 +53,9 @@ describe("bodyLines", () => {
 			NOW,
 		);
 		expect(lines[0]).toBe("Anthropic  Claude 订阅 · max · OAuth");
-		expect(lines[1]).toBe("  5 小时       ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置");
-		expect(lines[2]).toBe("  7 天 · Opus  ███████████████████░  95%");
-		expect(lines[3]).toBe("  额外用量     $37.50");
+		expect(lines[1]).toBe("  5 小时        ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置");
+		expect(lines[2]).toBe("  7 天 · Fable  ███████████████████░  95%");
+		expect(lines[3]).toBe("  额外用量      $37.50");
 	});
 
 	test("shows the host for relays, and the id when a custom name hides it", () => {

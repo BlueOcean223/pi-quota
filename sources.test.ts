@@ -59,32 +59,43 @@ function target(overrides: Partial<Target> = {}): Target {
 }
 
 describe("claude", () => {
-	test("reads the flat windows and skips the ones the plan does not have", () => {
+	test("reads both windows; one the plan has not used yet is 0%, as in Claude Code", () => {
+		const report = parseClaudeUsage({
+			five_hour: null,
+			seven_day: { utilization: 17.5, resets_at: "2026-10-09T00:00:00Z" },
+		});
+		expect(report.meters).toEqual([
+			{ label: "5 小时", usedPercent: 0 },
+			{ label: "7 天", usedPercent: 17.5, resetsAt: Date.parse("2026-10-09T00:00:00Z") },
+		]);
+	});
+
+	test("takes Fable's weekly limit from limits, and only that", () => {
+		// The mix CCometixLine's parser is tested against.
 		const report = parseClaudeUsage({
 			five_hour: { utilization: 42, resets_at: "2026-10-06T06:00:00Z" },
-			seven_day: { utilization: 17.5, resets_at: "2026-10-09T00:00:00Z" },
-			seven_day_opus: null,
-			seven_day_sonnet: { utilization: 3, resets_at: null },
+			seven_day: { utilization: 41, resets_at: "2026-10-08T14:00:00+00:00" },
+			seven_day_opus: { utilization: 76, resets_at: "2026-10-08T14:00:00+00:00" },
+			seven_day_sonnet: { utilization: 3 },
+			limits: [
+				{ kind: "weekly_scoped", scope: { model: null }, percent: 5 },
+				"unexpected",
+				{ kind: "daily", scope: { model: { display_name: "Fable" } }, percent: 80 },
+				{ kind: "weekly_scoped", scope: { model: { display_name: "Opus" } }, percent: 30 },
+				{ kind: "weekly_scoped", scope: { model: { display_name: "Fable" } }, percent: 12.4, resets_at: 1791468000 },
+			],
 		});
 		expect(report.meters.map((m) => [m.label, m.usedPercent])).toEqual([
 			["5 小时", 42],
-			["7 天", 17.5],
-			["7 天 · Sonnet", 3],
+			["7 天", 41],
+			["7 天 · Fable", 12.4],
 		]);
-		expect(report.meters[0]!.resetsAt).toBe(Date.parse("2026-10-06T06:00:00Z"));
-		expect(report.meters[2]!.resetsAt).toBeUndefined();
+		expect(report.meters[2]!.resetsAt).toBe(1791468000 * 1000);
 	});
 
-	test("adds model-scoped limits the flat fields do not cover", () => {
-		const report = parseClaudeUsage({
-			seven_day_sonnet: { utilization: 3 },
-			limits: [
-				{ kind: "weekly_scoped", percent: 9, scope: { model: { display_name: "Sonnet" } } },
-				{ kind: "weekly_scoped", percent: 61, resets_at: "2026-10-08T00:00:00Z", scope: { model: { display_name: "Fable" } } },
-				{ kind: "weekly_scoped", percent: 80, is_active: false, scope: { model: { display_name: "Old" } } },
-			],
-		});
-		expect(report.meters.map((m) => m.label)).toEqual(["7 天 · Sonnet", "7 天 · Fable"]);
+	test("a body with neither window shows none, and null limits are no obstacle", () => {
+		expect(parseClaudeUsage({ error: { type: "rate_limit_error" } }).meters).toEqual([]);
+		expect(parseClaudeUsage({ five_hour: { utilization: 24 }, seven_day: null, limits: null }).meters.map((m) => m.usedPercent)).toEqual([24, 0]);
 	});
 
 	test("shows extra usage in dollars, not cents", () => {
