@@ -41,6 +41,12 @@ const OAUTH_SOURCES: Record<string, Source> = {
 	openrouter,
 };
 
+/** Subscriptions whose vendor says outright where usage is shown instead. */
+const OAUTH_ELSEWHERE: Record<string, string> = {
+	// Sign in with ChatGPT: OpenAI documents no usage API for these tokens, only the settings page.
+	openai: "ChatGPT 登录没有额度接口，用量在 chatgpt.com/settings/usage 看",
+};
+
 const HOST_SOURCES: Array<[RegExp, Source]> = [
 	[/(^|\.)api\.kimi\.com$/, kimi],
 	[/(^|\.)deepseek\.com$/, deepseek],
@@ -80,7 +86,7 @@ export function pickSource(input: PickInput): Pick {
 
 	if (input.auth === "oauth") {
 		const source = OAUTH_SOURCES[input.provider];
-		return source ? { source } : { unsupported: "这个订阅没有公开的额度接口" };
+		return source ? { source } : { unsupported: OAUTH_ELSEWHERE[input.provider] ?? "这个订阅没有公开的额度接口" };
 	}
 
 	const host = hostOf(input.baseUrl).replace(/:\d+$/, "").toLowerCase();

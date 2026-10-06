@@ -28,6 +28,7 @@ describe("pickSource", () => {
 		expect(pick({ provider: "kimi-coding", auth: "oauth" })).toBe("kimi");
 		expect(pick({ provider: "xai", auth: "oauth" })).toBe("grok");
 		expect(pick({ provider: "meta", auth: "oauth" })).toStartWith("unsupported");
+		expect(pick({ provider: "openai", auth: "oauth", baseUrl: "https://api.openai.com/v1" })).toContain("chatgpt.com/settings/usage");
 	});
 
 	test("API keys go by the host they are sent to", () => {
