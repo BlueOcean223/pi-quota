@@ -8,6 +8,7 @@
  * is an error.
  */
 
+import { formatAmount } from "../format.js";
 import { arr, epochMs, expectJson, hostOf, num, obj, QuotaError, str } from "../http.js";
 import { emptyReport, type Report, type Source } from "../types.js";
 import { bearer, countDetail, windowLabel } from "./shared.js";
@@ -36,8 +37,11 @@ export const zai: Source = {
 
 		const report = emptyReport();
 		let quotaError: string | undefined;
+		// The server answering "no plan" is not worth a line next to a balance; failing to answer is.
+		let answered = false;
 		if (quota.status === "fulfilled") {
 			const body = expectJson(quota.value, "智谱 ");
+			answered = true;
 			if (body.success === true) mergeQuota(report, body);
 			else quotaError = str(body.msg) ?? "没有 Coding Plan";
 		} else {
@@ -49,7 +53,7 @@ export const zai: Source = {
 
 		if (quotaError) {
 			if (!hasBalance) throw new QuotaError(quotaError);
-			report.notes.push({ text: `Coding Plan：${quotaError}`, tone: "muted" });
+			if (!answered) report.notes.push({ text: `Coding Plan：${quotaError}`, tone: "warning" });
 		}
 		return report;
 	},
@@ -91,17 +95,11 @@ function periodLabel(unit: number | undefined, count: number | undefined): strin
 export function addBalance(report: Report, data: Record<string, unknown> | undefined): boolean {
 	const value = num(data?.availableBalance) ?? num(data?.balance);
 	if (value === undefined) return false;
-	const parts: string[] = [];
-	const recharged = num(data?.rechargeAmount);
-	const granted = num(data?.giveAmount);
 	const spent = num(data?.totalSpendAmount);
-	if (recharged !== undefined) parts.push(`充值 ¥${recharged.toFixed(2)}`);
-	if (granted) parts.push(`赠送 ¥${granted.toFixed(2)}`);
-	if (spent !== undefined) parts.push(`已消费 ¥${spent.toFixed(2)}`);
 	report.balances.push({
 		label: "余额",
 		value: { value, unit: "CNY" },
-		...(parts.length > 0 ? { detail: parts.join(" · ") } : {}),
+		...(spent !== undefined ? { detail: `已消费 ${formatAmount({ value: spent, unit: "CNY" })}` } : {}),
 	});
 	return true;
 }

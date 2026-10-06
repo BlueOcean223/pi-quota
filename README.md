@@ -13,7 +13,7 @@ Anthropic（当前）  Claude 订阅 · max · OAuth
   7 天 · Opus  ███████████████░░░░░  76%  3 天 5 小时后重置（10/09 16:47）
 
 DeepSeek  DeepSeek · API key
-  余额  ¥12.79  充值 ¥12.79
+  余额  ¥12.79
 
 tw-anthropic · tw-codex  new-api.example.com · NewAPI
   账户余额  ¥119.10  已用 ¥130.90 · 分组 default

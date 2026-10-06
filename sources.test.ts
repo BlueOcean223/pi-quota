@@ -223,8 +223,8 @@ describe("zai", () => {
 			}),
 		});
 		const report = await zai.fetch(target({ baseUrl: "https://open.bigmodel.cn/api/paas/v4" }), http);
-		expect(report.balances).toEqual([{ label: "余额", value: { value: 4.67088976, unit: "CNY" }, detail: "充值 ¥7.00 · 已消费 ¥2.33" }]);
-		expect(report.notes).toEqual([{ text: "Coding Plan：当前用户不存在coding plan", tone: "muted" }]);
+		expect(report.balances).toEqual([{ label: "余额", value: { value: 4.67088976, unit: "CNY" }, detail: "已消费 ¥2.33" }]);
+		expect(report.notes).toEqual([]);
 	});
 
 	test("fails when neither the plan nor the balance answers", async () => {
@@ -270,7 +270,7 @@ describe("deepseek", () => {
 			is_available: true,
 			balance_infos: [{ currency: "CNY", total_balance: "12.79", granted_balance: "0.00", topped_up_balance: "12.79" }],
 		});
-		expect(report.balances).toEqual([{ label: "余额", value: { value: 12.79, unit: "CNY" }, detail: "充值 ¥12.79" }]);
+		expect(report.balances).toEqual([{ label: "余额", value: { value: 12.79, unit: "CNY" } }]);
 		expect(report.notes).toEqual([]);
 	});
 

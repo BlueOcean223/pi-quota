@@ -2,7 +2,6 @@
  * Vendors whose API key can read its own account balance with one GET.
  */
 
-import { formatAmount } from "../format.js";
 import { arr, expectJson, hostOf, num, obj, originOf, QuotaError, str } from "../http.js";
 import { emptyReport, type Report, type Source } from "../types.js";
 import { bearer } from "./shared.js";
@@ -24,13 +23,7 @@ export function parseDeepseekBalance(body: Record<string, unknown>): Report {
 		const info = obj(raw);
 		const total = num(info?.total_balance);
 		if (!info || total === undefined) continue;
-		const unit = str(info.currency) ?? "CNY";
-		const parts: string[] = [];
-		const topped = num(info.topped_up_balance);
-		const granted = num(info.granted_balance);
-		if (topped !== undefined) parts.push(`充值 ${formatAmount({ value: topped, unit })}`);
-		if (granted) parts.push(`赠送 ${formatAmount({ value: granted, unit })}`);
-		report.balances.push({ label: "余额", value: { value: total, unit }, ...(parts.length ? { detail: parts.join(" · ") } : {}) });
+		report.balances.push({ label: "余额", value: { value: total, unit: str(info.currency) ?? "CNY" } });
 	}
 	if (body.is_available === false) report.notes.push({ text: "余额不足，API 已不可用", tone: "warning" });
 	return report;
@@ -54,11 +47,7 @@ export function parseMoonshotBalance(body: Record<string, unknown>, unit: string
 	if (available === undefined) throw new QuotaError(`Moonshot：${str(body.message) ?? str(body.scode) ?? "响应里没有余额"}`);
 	const report = emptyReport();
 	const cash = num(data?.cash_balance);
-	const voucher = num(data?.voucher_balance);
-	const parts: string[] = [];
-	if (cash !== undefined) parts.push(`现金 ${formatAmount({ value: cash, unit })}`);
-	if (voucher) parts.push(`代金券 ${formatAmount({ value: voucher, unit })}`);
-	report.balances.push({ label: "余额", value: { value: available, unit }, ...(parts.length ? { detail: parts.join(" · ") } : {}) });
+	report.balances.push({ label: "余额", value: { value: available, unit } });
 	if (cash !== undefined && cash < 0) report.notes.push({ text: "现金余额为负，已欠费", tone: "warning" });
 	return report;
 }
@@ -134,11 +123,6 @@ export function parseSiliconflow(body: Record<string, unknown>, unit: string): R
 	const total = num(data?.totalBalance);
 	if (total === undefined) throw new QuotaError(`硅基流动：${str(body.message) ?? "响应里没有余额"}`);
 	const report = emptyReport();
-	const charged = num(data?.chargeBalance);
-	const granted = num(data?.balance);
-	const parts: string[] = [];
-	if (charged !== undefined) parts.push(`充值 ${formatAmount({ value: charged, unit })}`);
-	if (granted) parts.push(`赠送 ${formatAmount({ value: granted, unit })}`);
-	report.balances.push({ label: "余额", value: { value: total, unit }, ...(parts.length ? { detail: parts.join(" · ") } : {}) });
+	report.balances.push({ label: "余额", value: { value: total, unit } });
 	return report;
 }
