@@ -5,12 +5,12 @@
 给 [Pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent) 加一个 `/quota`：订阅还剩多少限额、API key 还剩多少余额，一条命令全查。
 
 ```text
-额度 · 3 项 · 15:07 更新
+额度 · 3 项 · 11:47 更新
 ──────────────────────────────────────────────────────────────────────
 Anthropic（当前）  Claude 订阅 · max · OAuth
-  5 小时       ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置
-  7 天         ███░░░░░░░░░░░░░░░░░  17%  3 天 5 小时后重置（10/09 16:47）
-  7 天 · Opus  ███████████████░░░░░  76%  3 天 5 小时后重置（10/09 16:47）
+  5 小时        ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置
+  7 天          ███░░░░░░░░░░░░░░░░░  17%  3 天 5 小时后重置（10/09 16:47）
+  7 天 · Fable  ███████████████░░░░░  76%  3 天 5 小时后重置（10/09 16:47）
 
 DeepSeek  DeepSeek · API key
   余额  ¥12.79
@@ -33,7 +33,7 @@ Esc 关闭  ·  r 刷新
 
 | provider | 显示 |
 | --- | --- |
-| `anthropic`（Claude Pro/Max） | 5 小时、7 天、7 天 Opus/Sonnet 等窗口，额外用量 |
+| `anthropic`（Claude Pro/Max） | 5 小时、7 天窗口，Fable 的周限额，额外用量 |
 | `openai-codex`（ChatGPT Plus/Pro） | 5 小时、7 天窗口，单独计量的模型，credits |
 | `github-copilot` | 高级请求、Chat、补全的月度额度 |
 | `kimi-coding` | 5 小时速率窗口、7 天额度（OAuth 和 API key 都行） |

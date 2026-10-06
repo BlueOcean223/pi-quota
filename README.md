@@ -5,12 +5,12 @@
 `/quota` for [Pi](https://www.npmjs.com/package/@earendil-works/pi-coding-agent): how much of each subscription's rate limits and each API key's balance is left, in one command.
 
 ```text
-额度 · 3 项 · 15:07 更新
+额度 · 3 项 · 11:47 更新
 ──────────────────────────────────────────────────────────────────────
 Anthropic（当前）  Claude 订阅 · max · OAuth
-  5 小时       ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置
-  7 天         ███░░░░░░░░░░░░░░░░░  17%  3 天 5 小时后重置（10/09 16:47）
-  7 天 · Opus  ███████████████░░░░░  76%  3 天 5 小时后重置（10/09 16:47）
+  5 小时        ████████░░░░░░░░░░░░  42%  2 小时 13 分后重置
+  7 天          ███░░░░░░░░░░░░░░░░░  17%  3 天 5 小时后重置（10/09 16:47）
+  7 天 · Fable  ███████████████░░░░░  76%  3 天 5 小时后重置（10/09 16:47）
 
 DeepSeek  DeepSeek · API key
   余额  ¥12.79
@@ -35,7 +35,7 @@ The interface is in Chinese.
 
 | Provider | Shows |
 | --- | --- |
-| `anthropic` (Claude Pro/Max) | 5-hour, 7-day, 7-day Opus/Sonnet windows; extra usage |
+| `anthropic` (Claude Pro/Max) | 5-hour and 7-day windows, Fable's weekly limit; extra usage |
 | `openai-codex` (ChatGPT Plus/Pro) | 5-hour and 7-day windows, separately metered models, credits |
 | `github-copilot` | Monthly premium requests, chat, completions |
 | `kimi-coding` | 5-hour rate window, 7-day allowance (OAuth or API key) |
