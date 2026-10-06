@@ -195,17 +195,19 @@ describe("zai", () => {
 			level: "pro",
 			limits: [
 				{ type: "TOKENS_LIMIT", unit: 3, number: 5, percentage: 34, nextResetTime: 1_791_280_000_000 },
+				{ type: "TOKENS_LIMIT", unit: 6, number: 1, percentage: 20, nextResetTime: 1_791_640_000_000 },
 				{ type: "TIME_LIMIT", unit: 5, number: 1, percentage: 12, usage: 1000, currentValue: 120, remaining: 880 },
 			],
 		},
 	};
 
-	test("labels the five-hour window and the monthly MCP allowance", async () => {
+	test("labels the five-hour and weekly windows and the monthly MCP allowance", async () => {
 		const { http } = fakeHttp({ "https://api.z.ai/api/monitor/usage/quota/limit": json(quota) });
 		const report = await zai.fetch(target({ baseUrl: "https://api.z.ai/api/coding/paas/v4" }), http);
 		expect(report.plan).toBe("pro");
 		expect(report.meters.map((m) => [m.label, m.usedPercent, m.detail])).toEqual([
 			["5 小时", 34, undefined],
+			["7 天", 20, undefined],
 			["MCP 调用 · 本月", 12, "120 / 1000 次"],
 		]);
 	});

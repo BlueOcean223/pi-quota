@@ -13,8 +13,14 @@ import { emptyReport, type Report, type Source } from "../types.js";
 import { bearer, countDetail, windowLabel } from "./shared.js";
 
 const BALANCE_URL = "https://www.bigmodel.cn/api/biz/account/query-customer-account-report";
-/** `unit` codes in the quota response. */
-const UNIT_MINUTES: Record<number, number> = { 1: 60 * 24, 3: 60, 5: 1, 6: 60 * 24 * 7 };
+/**
+ * `unit` codes in the quota response, as the console and community tools read
+ * them; nothing official lists them. `number` counts units: 3/5 is the
+ * five-hour window, 6/1 the weekly one, 5/1 the monthly MCP allowance.
+ */
+const HOUR = 3;
+const MONTH = 5;
+const WEEK = 6;
 
 export const zai: Source = {
 	id: "zai",
@@ -58,16 +64,8 @@ export function mergeQuota(report: Report, body: Record<string, unknown>): void 
 		const usedPercent = num(limit?.percentage);
 		if (!limit || usedPercent === undefined) continue;
 		const type = str(limit.type);
-		const unit = num(limit.unit);
-		const count = num(limit.number);
-		const minutes = unit !== undefined && count ? (UNIT_MINUTES[unit] ?? 0) * count : undefined;
-		let label: string;
-		if (type === "TIME_LIMIT") {
-			// unit 5 / number 1 marks the monthly MCP allowance, not a one-minute window.
-			label = unit === 5 && count === 1 ? "MCP 调用 · 本月" : `MCP 调用 · ${windowLabel(minutes) ?? "周期"}`;
-		} else {
-			label = windowLabel(minutes) ?? "Coding Plan";
-		}
+		const period = periodLabel(num(limit.unit), num(limit.number));
+		const label = type === "TIME_LIMIT" ? `MCP 调用 · ${period ?? "周期"}` : (period ?? "Coding Plan");
 		const total = num(limit.usage);
 		const used = num(limit.currentValue) ?? (total !== undefined && num(limit.remaining) !== undefined ? total - num(limit.remaining)! : undefined);
 		const detail = countDetail(used, total, type === "TIME_LIMIT" ? "次" : "");
@@ -79,6 +77,14 @@ export function mergeQuota(report: Report, body: Record<string, unknown>): void 
 			...(detail ? { detail } : {}),
 		});
 	}
+}
+
+function periodLabel(unit: number | undefined, count: number | undefined): string | undefined {
+	if (!count || count <= 0) return undefined;
+	if (unit === HOUR) return windowLabel(count * 60);
+	if (unit === WEEK) return windowLabel(count * 60 * 24 * 7);
+	if (unit === MONTH) return count === 1 ? "本月" : `${count} 个月`;
+	return undefined;
 }
 
 /** Add the bigmodel.cn account balance. Returns false when the body has none. */
