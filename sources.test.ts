@@ -353,11 +353,44 @@ describe("relay probe", () => {
 	const status = json({ success: true, data: { quota_per_unit: 500000, quota_display_type: "CNY", usd_exchange_rate: 5 } });
 
 	test("recognizes NewAPI and points at quota.json when only the account knows the cap", async () => {
-		const { http } = fakeHttp({ "https://relay.example.com/api/usage/token/": tokenUsage, "https://relay.example.com/api/status": status });
+		const { http } = fakeHttp({
+			"https://relay.example.com/api/usage/token/": tokenUsage,
+			"https://relay.example.com/api/status": status,
+			// Per-token stats on: the billing endpoints only repeat that the token is unlimited.
+			"https://relay.example.com/v1/dashboard/billing/subscription": json({ object: "billing_subscription", hard_limit_usd: 100_000_000 }),
+			"https://relay.example.com/v1/dashboard/billing/usage": json({ object: "list", total_usage: 13090.345 }),
+		});
 		const report = await relay.fetch(target({ provider: "tw-codex" }), http);
 		expect(report.plan).toBe("NewAPI");
-		expect(report.balances[0]!.detail).toBe("已用 ¥130.90");
-		expect(report.notes.map((n) => n.text)).toEqual(["令牌不限额，账户余额要在 quota.json 给 tw-codex 配 accessToken 和 userId"]);
+		expect(report.balances).toEqual([{ label: "令牌 pi", value: "unlimited", detail: "已用 ¥130.90" }]);
+		expect(report.notes.map((n) => n.text)).toEqual(["令牌不限额，要看账户余额，在 quota.json 给 tw-codex 配 accessToken"]);
+	});
+
+	test("reads the account balance with the key alone when the site bills by account", async () => {
+		const { http } = fakeHttp({
+			"https://relay.example.com/api/usage/token/": tokenUsage,
+			"https://relay.example.com/api/status": status,
+			"https://relay.example.com/v1/dashboard/billing/subscription": json({ object: "billing_subscription", hard_limit_usd: 250 }),
+			"https://relay.example.com/v1/dashboard/billing/usage": json({ object: "list", total_usage: 13090.345 }),
+		});
+		const report = await relay.fetch(target(), http);
+		expect(report.balances[0]).toEqual({ label: "账户余额", value: { value: expect.closeTo(119.09655, 6), unit: "CNY" }, detail: "已用 ¥130.90" });
+		expect(report.notes).toEqual([]);
+	});
+
+	test("an access token alone is enough on current builds; older ones ask for the user id", async () => {
+		const routes = { "https://relay.example.com/api/usage/token/": tokenUsage, "https://relay.example.com/api/status": status };
+		const current = fakeHttp({ ...routes, "https://relay.example.com/api/user/self": json({ success: true, data: { quota: 25_000_000 } }) });
+		const report = await relay.fetch(target({ settings: { accessToken: "dash-token" } }), current.http);
+		expect(report.balances[0]!.value).toEqual({ value: 250, unit: "CNY" });
+		expect(current.calls.find((call) => call.url.endsWith("/api/user/self"))!.headers).toEqual({ authorization: "Bearer dash-token" });
+
+		const old = fakeHttp({
+			...routes,
+			"https://relay.example.com/api/user/self": json({ success: false, message: "无权进行此操作，未提供 New-Api-User" }),
+		});
+		const notes = (await relay.fetch(target({ settings: { accessToken: "dash-token" } }), old.http)).notes;
+		expect(notes).toContainEqual({ text: "账户余额：无权进行此操作，未提供 New-Api-User（这个站点的版本还要在 quota.json 配 userId）", tone: "warning" });
 	});
 
 	test("adds the account balance with an access token and user id", async () => {

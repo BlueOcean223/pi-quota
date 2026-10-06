@@ -16,8 +16,10 @@
  *    challenges `/api/*`.
  *
  * NewAPI tokens are often created with unlimited quota, in which case the
- * token reports no limit and the real cap is the account balance. That needs
- * a dashboard access token, configured per provider in `quota.json`.
+ * token reports no limit and the real cap is the account balance. Sites that
+ * turn off per-token stats answer the billing endpoints for the account, so
+ * the key alone is enough there. Elsewhere it takes a system access token,
+ * configured per provider in `quota.json`.
  */
 
 import { resolveConfigValue } from "../config.js";
@@ -179,31 +181,62 @@ export function parseTokenUsage(data: Record<string, unknown>, unit: SiteUnit, n
 	return report;
 }
 
-/** Add the account balance when `quota.json` has an access token, or say how to get it. */
+/**
+ * Add the account balance: from the access token in `quota.json` when there is
+ * one, else from the billing endpoints when the site reports the account
+ * there, else say how to get it.
+ */
 async function finishNewapi(http: Http, origin: string, target: Target, report: Report, unit: SiteUnit): Promise<Report> {
-	const unlimited = report.balances.some((balance) => balance.value === "unlimited");
-	if (!target.settings.accessToken) {
-		if (unlimited) {
-			report.notes.push({ text: `令牌不限额，账户余额要在 quota.json 给 ${target.provider} 配 accessToken 和 userId`, tone: "muted" });
+	if (target.settings.accessToken) {
+		try {
+			report.balances.unshift(await accountBalance(http, origin, target, unit));
+		} catch (error) {
+			report.notes.push({ text: `账户余额：${error instanceof Error ? error.message : String(error)}`, tone: "warning" });
 		}
 		return report;
 	}
-	try {
-		report.balances.unshift(await accountBalance(http, origin, target, unit));
-	} catch (error) {
-		report.notes.push({ text: `账户余额：${error instanceof Error ? error.message : String(error)}`, tone: "warning" });
-	}
+	if (!report.balances.some((balance) => balance.value === "unlimited")) return report;
+	const account = await billingAccount(http, origin, bearer(target), unit).catch(() => undefined);
+	if (account) report.balances.unshift(account);
+	else report.notes.push({ text: `令牌不限额，要看账户余额，在 quota.json 给 ${target.provider} 配 accessToken`, tone: "muted" });
 	return report;
+}
+
+/**
+ * With per-token stats off (`DisplayTokenStatEnabled`), the billing endpoints
+ * answer for the account, in the site's display unit. With them on, an
+ * unlimited token gets the sentinel instead, which says nothing.
+ */
+async function billingAccount(http: Http, origin: string, key: string, unit: SiteUnit): Promise<Balance | undefined> {
+	const headers = { authorization: `Bearer ${key}` };
+	const [subscription, usage] = await Promise.all([
+		http.getJson(`${origin}/v1/dashboard/billing/subscription`, { headers }),
+		http.getJson(`${origin}/v1/dashboard/billing/usage`, { headers }),
+	]);
+	if (subscription.status !== 200 || usage.status !== 200) return undefined;
+	const total = num(obj(subscription.json)?.hard_limit_usd);
+	const usedCents = num(obj(usage.json)?.total_usage);
+	if (total === undefined || usedCents === undefined || total >= UNLIMITED_SENTINEL - 1) return undefined;
+	const used = usedCents / 100;
+	return {
+		label: "账户余额",
+		value: { value: total - used, unit: unit.unit },
+		detail: `已用 ${formatAmount({ value: used, unit: unit.unit })}`,
+	};
 }
 
 async function accountBalance(http: Http, origin: string, target: Target, unit: SiteUnit): Promise<Balance> {
 	const token = resolveConfigValue(target.settings.accessToken);
 	if (!token) throw new QuotaError("accessToken 解析出来是空的");
 	const headers: Record<string, string> = { authorization: `Bearer ${token}` };
-	// Older builds refuse an access token without the matching user id.
+	// Builds before mid-2026 refuse an access token without the matching user id.
 	if (target.settings.userId !== undefined) headers["new-api-user"] = String(target.settings.userId);
 	const body = expectJson(await http.getJson(`${origin}/api/user/self`, { headers }), "NewAPI ");
-	if (body.success !== true) throw new QuotaError(str(body.message) ?? "查询账户失败");
+	if (body.success !== true) {
+		const message = str(body.message) ?? "查询账户失败";
+		const needsUser = /new-api-user/i.test(message) && target.settings.userId === undefined;
+		throw new QuotaError(needsUser ? `${message}（这个站点的版本还要在 quota.json 配 userId）` : message);
+	}
 	const data = obj(body.data);
 	const quota = num(data?.quota);
 	if (quota === undefined) throw new QuotaError("响应里没有账户额度");
