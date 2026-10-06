@@ -40,6 +40,8 @@ describe("pickSource", () => {
 		expect(pick({ baseUrl: "https://api.moonshot.cn/v1", custom: false })).toBe("moonshot");
 		expect(pick({ baseUrl: "https://openrouter.ai/api/v1", custom: false })).toBe("openrouter");
 		expect(pick({ baseUrl: "https://api.siliconflow.cn/v1" })).toBe("siliconflow");
+		expect(pick({ provider: "opencode-go", baseUrl: "https://opencode.ai/zen/go/v1", custom: false })).toBe("opencode-go");
+		expect(pick({ provider: "opencode", baseUrl: "https://opencode.ai/zen/v1", custom: false })).toStartWith("unsupported");
 	});
 
 	test("a built-in provider pointed at a relay is the relay", () => {

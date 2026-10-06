@@ -18,11 +18,12 @@ import { copilot } from "./copilot.js";
 import { grok } from "./grok.js";
 import { kimi } from "./kimi.js";
 import { minimax } from "./minimax.js";
+import { opencodeGo } from "./opencode.js";
 import { billing, newapi, relay, sub2api } from "./relay.js";
 import { zai } from "./zai.js";
 
 export const SOURCES: Record<string, Source> = Object.fromEntries(
-	[claude, codex, copilot, grok, kimi, zai, minimax, deepseek, moonshot, openrouter, siliconflow, newapi, sub2api, billing, relay].map(
+	[claude, codex, copilot, grok, kimi, zai, minimax, opencodeGo, deepseek, moonshot, openrouter, siliconflow, newapi, sub2api, billing, relay].map(
 		(source) => [source.id, source],
 	),
 );
@@ -57,6 +58,9 @@ const HOST_SOURCES: Array<[RegExp, Source]> = [
 	[/(^|\.)minimaxi?\.(com|io|chat)$/, minimax],
 ];
 
+/** Hosts that sell more than one product, told apart by path. Matched against `host/path`. */
+const PATH_SOURCES: Array<[RegExp, Source]> = [[/^opencode\.ai\/zen\/go(\/|$)/, opencodeGo]];
+
 /** Official endpoints where an ordinary key cannot read a balance. */
 const NO_BALANCE_API: Array<[RegExp, string]> = [
 	[/(^|\.)anthropic\.com$/, "Anthropic API key 查不了余额（要 Admin key）"],
@@ -90,11 +94,21 @@ export function pickSource(input: PickInput): Pick {
 	}
 
 	const host = hostOf(input.baseUrl).replace(/:\d+$/, "").toLowerCase();
+	const hostPath = `${host}${pathOf(input.baseUrl)}`;
+	for (const [pattern, source] of PATH_SOURCES) if (pattern.test(hostPath)) return { source };
 	for (const [pattern, source] of HOST_SOURCES) if (pattern.test(host)) return { source };
 	for (const [pattern, reason] of NO_BALANCE_API) if (pattern.test(host)) return { unsupported: reason };
 	if (isLocal(host)) return { unsupported: "本地服务，没有额度" };
 	if (input.custom) return { source: relay };
 	return { unsupported: "没有已知的余额接口" };
+}
+
+function pathOf(url: string): string {
+	try {
+		return new URL(url).pathname.toLowerCase();
+	} catch {
+		return "";
+	}
 }
 
 function isLocal(host: string): boolean {

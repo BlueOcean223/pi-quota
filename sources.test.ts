@@ -11,6 +11,7 @@ import { codex, parseCodexUsage } from "./sources/codex.js";
 import { copilot, parseCopilotUsage } from "./sources/copilot.js";
 import { parseKimiUsage, usageUrl } from "./sources/kimi.js";
 import { parseMinimaxRemains } from "./sources/minimax.js";
+import { opencodeGo, parseOpencodeGoUsage } from "./sources/opencode.js";
 import { parseSub2api, parseTokenUsage, quotaAmount, relay, unitFromStatus } from "./sources/relay.js";
 import { grok, parseGrokBilling } from "./sources/grok.js";
 import { zai } from "./sources/zai.js";
@@ -549,5 +550,39 @@ describe("grok", () => {
 
 	test("a response with nothing to show is an error, not an empty row", () => {
 		expect(() => parseGrokBilling({ isUnifiedBillingUser: true }, NO_ALLOWANCE.config)).toThrow("没有用量数据");
+	});
+});
+
+describe("opencode go", () => {
+	// The shape from cc-switch#6433, where it was read off a live account.
+	const usage = {
+		usage: {
+			rolling: { status: "ok", percent: 4, resetsAt: "2026-10-06T16:27:38.287Z" },
+			weekly: { status: "ok", percent: 3, resetsAt: "2026-10-12T00:00:00.287Z" },
+			monthly: { status: "ok", percent: 1, resetsAt: "2026-11-01T06:06:01.287Z" },
+		},
+	};
+
+	test("asks the service root whatever the base URL ends in", async () => {
+		for (const baseUrl of ["https://opencode.ai/zen/go", "https://opencode.ai/zen/go/v1"]) {
+			const { http, calls } = fakeHttp({ "https://opencode.ai/zen/go/v1/usage": json(usage) });
+			const report = await opencodeGo.fetch(target({ provider: "opencode-go", baseUrl }), http);
+			expect(calls.map((call) => call.url)).toEqual(["https://opencode.ai/zen/go/v1/usage"]);
+			expect(report.meters.map((m) => [m.label, m.usedPercent, m.resetsAt])).toEqual([
+				["5 小时", 4, Date.parse("2026-10-06T16:27:38.287Z")],
+				["7 天", 3, Date.parse("2026-10-12T00:00:00.287Z")],
+				["本月", 1, Date.parse("2026-11-01T06:06:01.287Z")],
+			]);
+		}
+	});
+
+	test("a window that is not ok is reported instead of drawn as 0%", () => {
+		const report = parseOpencodeGoUsage({ usage: { ...usage.usage, rolling: { status: "unavailable", percent: 0 } } });
+		expect(report.meters.map((m) => m.label)).toEqual(["7 天", "本月"]);
+		expect(report.notes).toEqual([{ text: "5 小时窗口暂时查不到（unavailable）", tone: "warning" }]);
+	});
+
+	test("a body without usage is an error", () => {
+		expect(() => parseOpencodeGoUsage({ error: "nope" })).toThrow("没有用量");
 	});
 });
