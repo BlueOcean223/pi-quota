@@ -52,6 +52,7 @@ function target(overrides: Partial<Target> = {}): Target {
 		token: "sk-test",
 		headers: {},
 		baseUrl: "https://relay.example.com/v1",
+		site: "relay.example.com",
 		settings: {},
 		...overrides,
 	};

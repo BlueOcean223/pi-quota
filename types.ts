@@ -32,6 +32,8 @@ export interface Target {
 	/** Headers pi would send, already resolved. Kimi's OAuth puts its token here. */
 	headers: Record<string, string>;
 	baseUrl: string;
+	/** The quota.json `sites` key this target's settings were looked up under. */
+	site: string;
 	/** The stored OAuth credential, for the fields a token alone does not carry. */
 	credential?: Record<string, unknown>;
 	settings: ProviderSettings;

@@ -119,7 +119,7 @@ async function run(ctx: CandidateContext, http: Http, options: { only?: string; 
 	let changes = 0;
 	const { state, finished } = startQuery({
 		ctx,
-		config: options.config ?? { providers: {} },
+		config: options.config ?? { sites: {}, providers: {} },
 		...(options.only ? { only: options.only } : {}),
 		http,
 		signal: new AbortController().signal,
@@ -174,8 +174,25 @@ describe("startQuery", () => {
 			{ id: "tw-codex", baseUrl: "https://relay.example.com/v1", key: "sk-shared" },
 		]);
 		const { http } = counting(NEWAPI);
-		const { state } = await run(ctx, http, { config: { providers: { "tw-codex": { accessToken: "t", userId: 1 } } } });
+		const { state } = await run(ctx, http, { config: { sites: {}, providers: { "tw-codex": { accessToken: "t", userId: 1 } } } });
 		expect(state.rows.map((row) => row.providers)).toEqual([["tw-anthropic"], ["tw-codex"]]);
+	});
+
+	test("settings under the site apply to every provider on it, so the shared row stays one row", async () => {
+		const ctx = fakeContext([
+			{ id: "tw-anthropic", baseUrl: "https://relay.example.com", key: "sk-shared" },
+			{ id: "tw-codex", baseUrl: "https://relay.example.com/v1", key: "sk-shared" },
+		]);
+		const { http, seen } = counting(NEWAPI);
+		const { state } = await run(ctx, http, { config: { sites: { "relay.example.com": { accessToken: "t" } }, providers: {} } });
+		expect(state.rows.map((row) => row.providers)).toEqual([["tw-anthropic", "tw-codex"]]);
+		expect(seen).toContain("https://relay.example.com/api/user/self");
+	});
+
+	test("a site can be turned off", async () => {
+		const ctx = fakeContext([{ id: "anyrouter", baseUrl: "https://anyrouter.top", key: "sk" }]);
+		const { state } = await run(ctx, counting({}).http, { config: { sites: { "anyrouter.top": { type: "off" } }, providers: {} } });
+		expect(state.rows).toEqual([]);
 	});
 
 	test("the session's provider comes first, the rest by name", async () => {
@@ -227,7 +244,7 @@ describe("startQuery", () => {
 
 	test("turned-off providers vanish entirely", async () => {
 		const ctx = fakeContext([{ id: "deepseek", baseUrl: "https://api.deepseek.com", key: "sk" }]);
-		const { state } = await run(ctx, counting(DEEPSEEK).http, { config: { providers: { deepseek: { type: "off" } } } });
+		const { state } = await run(ctx, counting(DEEPSEEK).http, { config: { sites: {}, providers: { deepseek: { type: "off" } } } });
 		expect(state.rows).toEqual([]);
 		expect(state.skipped).toEqual([]);
 	});

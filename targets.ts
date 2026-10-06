@@ -11,7 +11,7 @@
 
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { type QuotaConfig, readAgentJson } from "./config.js";
+import { type QuotaConfig, readAgentJson, settingsFor, siteKey } from "./config.js";
 import { obj, QuotaError, str } from "./http.js";
 import type { AuthKind, ProviderSettings, Target } from "./types.js";
 
@@ -28,6 +28,8 @@ export interface Candidate {
 	custom: boolean;
 	/** The provider of the model the session is using. */
 	current: boolean;
+	/** The quota.json `sites` key: the host the provider's requests go to. */
+	site: string;
 	settings: ProviderSettings;
 }
 
@@ -62,7 +64,8 @@ export function listCandidates(ctx: CandidateContext, config: QuotaConfig, only?
 			configured: registry.hasConfiguredAuth(model),
 			custom: str(obj(modelsJson[provider])?.baseUrl) !== undefined,
 			current: ctx.model?.provider === provider,
-			settings: config.providers[provider] ?? {},
+			site: siteKey(model.baseUrl),
+			settings: settingsFor(config, provider, model.baseUrl),
 		});
 	}
 	return candidates;
@@ -89,6 +92,7 @@ export async function resolveTarget(registry: Registry, candidate: Candidate): P
 		...(auth.apiKey ? { token: auth.apiKey } : {}),
 		headers,
 		baseUrl: candidate.settings.baseUrl ?? auth.baseUrl ?? candidate.model.baseUrl,
+		site: candidate.site,
 		...(credential ? { credential } : {}),
 		settings: candidate.settings,
 	};
