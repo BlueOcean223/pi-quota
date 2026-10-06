@@ -1,0 +1,24 @@
+# Design notes and scratch work, kept local.
+.agent/
+
+# Dependencies. `@earendil-works/*` is symlinked to the installed pi, so a
+# checked-in tree here would be one machine's paths.
+node_modules/
+bun.lock
+bun.lockb
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Local secrets. Credentials belong in ~/.pi/agent, never in this tree.
+.env
+.env.*
+
+# Publish artifacts.
+*.tgz
+
+# Editor and OS droppings.
+.DS_Store
+*.swp
+.idea/
+.vscode/

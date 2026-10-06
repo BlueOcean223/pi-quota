@@ -1,0 +1,53 @@
+{
+	"name": "@blueocean223/pi-quota",
+	"version": "0.1.0",
+	"description": "/quota for pi: check subscription rate limits (Claude, Codex, Copilot, Kimi, GLM, MiniMax) and API key balances, including NewAPI / Sub2API relays",
+	"license": "MIT",
+	"author": "BlueOcean223",
+	"type": "module",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/BlueOcean223/pi-quota.git"
+	},
+	"homepage": "https://github.com/BlueOcean223/pi-quota#readme",
+	"bugs": {
+		"url": "https://github.com/BlueOcean223/pi-quota/issues"
+	},
+	"engines": {
+		"node": ">=22.19.0"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"test": "bun test",
+		"typecheck": "tsc --noEmit"
+	},
+	"pi": {
+		"extensions": ["./index.ts"]
+	},
+	"files": [
+		"index.ts",
+		"config.ts",
+		"format.ts",
+		"http.ts",
+		"panel.ts",
+		"query.ts",
+		"render.ts",
+		"targets.ts",
+		"types.ts",
+		"sources/*.ts",
+		"!**/*.test.ts",
+		"README.zh-CN.md"
+	],
+	"keywords": ["pi-package", "pi", "pi-coding-agent", "quota", "usage", "balance", "rate-limit", "new-api"],
+	"peerDependencies": {
+		"@earendil-works/pi-ai": "*",
+		"@earendil-works/pi-coding-agent": "*",
+		"@earendil-works/pi-tui": "*"
+	},
+	"devDependencies": {
+		"@types/bun": "^1.4.0",
+		"typescript": "^7.0.2"
+	}
+}
