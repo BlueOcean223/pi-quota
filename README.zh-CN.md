@@ -134,6 +134,9 @@ pi --extension ./index.ts
 ## 开发
 
 ```bash
-bun test
+bun install
+bun run test
 bun run typecheck
 ```
+
+测试和类型检查会 import pi 在运行时提供的包（`@earendil-works/*`、`typebox`）。`bun install` 不安装它们（见 `bunfig.toml`），所以它们来自你正在运行的 pi：把它们从 pi 的安装目录链接到本目录或上级目录的 `node_modules/` 下。

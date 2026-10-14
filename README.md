@@ -136,6 +136,9 @@ pi --extension ./index.ts
 ## Development
 
 ```bash
-bun test
+bun install
+bun run test
 bun run typecheck
 ```
+
+The tests and the type check import the packages pi supplies at runtime (`@earendil-works/*`, `typebox`). `bun install` leaves them out (`bunfig.toml`), so they come from the pi you run: link them from your pi install into `node_modules/` here or in a parent directory.
