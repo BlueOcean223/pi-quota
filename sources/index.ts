@@ -9,18 +9,18 @@
  * relay; a built-in one nobody recognizes has no balance API to ask.
  */
 
-import { hostOf } from "../http.js";
-import type { AuthKind, ProviderSettings, Source } from "../types.js";
-import { deepseek, moonshot, openrouter, siliconflow } from "./balance.js";
-import { claude } from "./claude.js";
-import { codex } from "./codex.js";
-import { copilot } from "./copilot.js";
-import { grok } from "./grok.js";
-import { kimi } from "./kimi.js";
-import { minimax } from "./minimax.js";
-import { opencodeGo } from "./opencode.js";
-import { billing, newapi, relay, sub2api } from "./relay.js";
-import { zai } from "./zai.js";
+import { hostOf } from "../http.ts";
+import type { AuthKind, ProviderSettings, Source } from "../types.ts";
+import { deepseek, moonshot, openrouter, siliconflow } from "./balance.ts";
+import { claude } from "./claude.ts";
+import { codex } from "./codex.ts";
+import { copilot } from "./copilot.ts";
+import { grok } from "./grok.ts";
+import { kimi } from "./kimi.ts";
+import { minimax } from "./minimax.ts";
+import { opencodeGo } from "./opencode.ts";
+import { billing, newapi, relay, sub2api } from "./relay.ts";
+import { zai } from "./zai.ts";
 
 export const SOURCES: Record<string, Source> = Object.fromEntries(
 	[claude, codex, copilot, grok, kimi, zai, minimax, opencodeGo, deepseek, moonshot, openrouter, siliconflow, newapi, sub2api, billing, relay].map(

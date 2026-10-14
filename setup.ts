@@ -10,11 +10,11 @@
 
 import { homedir } from "node:os";
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { getConfigPath, readConfigText, siteUpdate, writeConfigText } from "./config.js";
-import { formatAmount } from "./format.js";
-import type { SetupRequest } from "./panel.js";
-import { checkAccount, NeedsUserId } from "./sources/relay.js";
-import type { Balance, Http, ProviderSettings } from "./types.js";
+import { getConfigPath, readConfigText, siteUpdate, writeConfigText } from "./config.ts";
+import { formatAmount } from "./format.ts";
+import type { SetupRequest } from "./panel.ts";
+import { checkAccount, NeedsUserId } from "./sources/relay.ts";
+import type { Balance, Http, ProviderSettings } from "./types.ts";
 
 const STATUS_KEY = "quota";
 

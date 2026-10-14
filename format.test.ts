@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { barCells, formatAmount, formatCount, formatPercent, formatReset, usageLevel } from "./format.js";
+import { barCells, formatAmount, formatCount, formatPercent, formatReset, usageLevel } from "./format.ts";
 
 describe("formatAmount", () => {
 	test("puts the symbol in front for USD and CNY", () => {

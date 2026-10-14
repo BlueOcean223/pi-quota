@@ -22,11 +22,11 @@
  * configured per provider in `quota.json`.
  */
 
-import { resolveConfigValue } from "../config.js";
-import { formatAmount, formatDate } from "../format.js";
-import { arr, epochMs, expectJson, num, obj, originOf, QuotaError, str } from "../http.js";
-import { type Amount, type Balance, emptyReport, type Http, type Report, type Source, type Target } from "../types.js";
-import { bearer } from "./shared.js";
+import { resolveConfigValue } from "../config.ts";
+import { formatAmount, formatDate } from "../format.ts";
+import { arr, epochMs, expectJson, num, obj, originOf, QuotaError, str } from "../http.ts";
+import { type Amount, type Balance, emptyReport, type Http, type Report, type Source, type Target } from "../types.ts";
+import { bearer } from "./shared.ts";
 
 /** NewAPI's sentinel for an unlimited token in the billing endpoints. */
 const UNLIMITED_SENTINEL = 100_000_000;

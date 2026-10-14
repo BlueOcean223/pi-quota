@@ -8,10 +8,10 @@ import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Api, Model } from "@earendil-works/pi-ai";
-import { startQuery } from "./query.js";
-import { type PickInput, pickSource } from "./sources/index.js";
-import type { CandidateContext } from "./targets.js";
-import type { Http, HttpResult } from "./types.js";
+import { startQuery } from "./query.ts";
+import { type PickInput, pickSource } from "./sources/index.ts";
+import type { CandidateContext } from "./targets.ts";
+import type { Http, HttpResult } from "./types.ts";
 
 function pick(overrides: Partial<PickInput>) {
 	const result = pickSource({ provider: "p", auth: "api_key", baseUrl: "https://relay.example.com/v1", custom: true, settings: {}, ...overrides });

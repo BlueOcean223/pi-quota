@@ -5,7 +5,7 @@
  * load, so the global `fetch` already goes through the user's proxy.
  */
 
-import type { Http, HttpResult } from "./types.js";
+import type { Http, HttpResult } from "./types.ts";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 const USER_AGENT = "pi-quota/0.1";

@@ -6,9 +6,9 @@
  * fill in windows the counts did not cover.
  */
 
-import { arr, epochMs, expectJson, num, obj, str } from "../http.js";
-import { emptyReport, type Meter, type Report, type Source } from "../types.js";
-import { bearer, countDetail, percentOf, windowLabel } from "./shared.js";
+import { arr, epochMs, expectJson, num, obj, str } from "../http.ts";
+import { emptyReport, type Meter, type Report, type Source } from "../types.ts";
+import { bearer, countDetail, percentOf, windowLabel } from "./shared.ts";
 
 const DEFAULT_BASE = "https://api.kimi.com/coding";
 const TIME_UNIT_MINUTES: Record<string, number> = {

@@ -1,6 +1,6 @@
-import { formatCount } from "../format.js";
-import { QuotaError } from "../http.js";
-import type { Target } from "../types.js";
+import { formatCount } from "../format.ts";
+import { QuotaError } from "../http.ts";
+import type { Target } from "../types.ts";
 
 /** The bearer token pi would send: the API key, or the token inside an `Authorization` header. */
 export function bearer(target: Target): string {

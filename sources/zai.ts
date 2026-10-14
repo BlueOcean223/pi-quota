@@ -8,10 +8,10 @@
  * is an error.
  */
 
-import { formatAmount } from "../format.js";
-import { arr, epochMs, expectJson, hostOf, num, obj, QuotaError, str } from "../http.js";
-import { emptyReport, type Report, type Source } from "../types.js";
-import { bearer, countDetail, windowLabel } from "./shared.js";
+import { formatAmount } from "../format.ts";
+import { arr, epochMs, expectJson, hostOf, num, obj, QuotaError, str } from "../http.ts";
+import { emptyReport, type Report, type Source } from "../types.ts";
+import { bearer, countDetail, windowLabel } from "./shared.ts";
 
 const BALANCE_URL = "https://www.bigmodel.cn/api/biz/account/query-customer-account-report";
 /**

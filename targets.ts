@@ -11,9 +11,9 @@
 
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { type QuotaConfig, readAgentJson, settingsFor, siteKey } from "./config.js";
-import { obj, QuotaError, str } from "./http.js";
-import type { AuthKind, ProviderSettings, Target } from "./types.js";
+import { type QuotaConfig, readAgentJson, settingsFor, siteKey } from "./config.ts";
+import { obj, QuotaError, str } from "./http.ts";
+import type { AuthKind, ProviderSettings, Target } from "./types.ts";
 
 type Registry = ExtensionContext["modelRegistry"];
 

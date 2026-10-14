@@ -25,8 +25,8 @@ import { execSync } from "node:child_process";
 import { chmodSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
-import { hostOf, obj } from "./http.js";
-import type { ProviderSettings } from "./types.js";
+import { hostOf, obj } from "./http.ts";
+import type { ProviderSettings } from "./types.ts";
 
 export interface QuotaConfig {
 	/** Keyed by host, lowercase, with the port when the URL has one. */

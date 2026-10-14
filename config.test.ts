@@ -3,7 +3,7 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { parseConfig, settingsFor, siteUpdate } from "./config.js";
+import { parseConfig, settingsFor, siteUpdate } from "./config.ts";
 
 describe("parseConfig", () => {
 	test("reads sites by host, accepting a URL for the key", () => {

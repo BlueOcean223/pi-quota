@@ -7,9 +7,9 @@
  * metered features list them under `additional_rate_limits`.
  */
 
-import { arr, epochMs, expectJson, num, obj, str } from "../http.js";
-import { emptyReport, type Meter, type Report, type Source, type Target } from "../types.js";
-import { bearer, windowLabel } from "./shared.js";
+import { arr, epochMs, expectJson, num, obj, str } from "../http.ts";
+import { emptyReport, type Meter, type Report, type Source, type Target } from "../types.ts";
+import { bearer, windowLabel } from "./shared.ts";
 
 const USAGE_URL = "https://chatgpt.com/backend-api/wham/usage";
 const JWT_AUTH_CLAIM = "https://api.openai.com/auth";

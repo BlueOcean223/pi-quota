@@ -7,9 +7,9 @@ import { existsSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync 
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import type { SetupRequest } from "./panel.js";
-import { runSetup } from "./setup.js";
-import type { Http, HttpResult } from "./types.js";
+import type { SetupRequest } from "./panel.ts";
+import { runSetup } from "./setup.ts";
+import type { Http, HttpResult } from "./types.ts";
 
 const agentDir = mkdtempSync(join(tmpdir(), "pi-quota-setup-"));
 const configPath = join(agentDir, "quota.json");

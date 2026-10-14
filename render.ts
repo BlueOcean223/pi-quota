@@ -4,10 +4,10 @@
  */
 
 import { truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import { barCells, formatAmount, formatClock, formatPercent, formatReset, usageLevel } from "./format.js";
-import type { QueryState, Row } from "./query.js";
-import { RELAY_SOURCES } from "./sources/index.js";
-import type { AccountSetup, Balance, Meter, Report } from "./types.js";
+import { barCells, formatAmount, formatClock, formatPercent, formatReset, usageLevel } from "./format.ts";
+import type { QueryState, Row } from "./query.ts";
+import { RELAY_SOURCES } from "./sources/index.ts";
+import type { AccountSetup, Balance, Meter, Report } from "./types.ts";
 
 export type StyleColor = "accent" | "muted" | "dim" | "success" | "warning" | "error" | "text";
 

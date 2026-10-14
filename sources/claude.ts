@@ -10,9 +10,9 @@
  * limits that no longer apply and are left out.
  */
 
-import { arr, epochMs, expectJson, num, obj, str } from "../http.js";
-import { emptyReport, type Meter, type Report, type Source } from "../types.js";
-import { bearer } from "./shared.js";
+import { arr, epochMs, expectJson, num, obj, str } from "../http.ts";
+import { emptyReport, type Meter, type Report, type Source } from "../types.ts";
+import { bearer } from "./shared.ts";
 
 const USAGE_URL = "https://api.anthropic.com/api/oauth/usage";
 /** Matches the identity pi's own Anthropic OAuth requests send. */

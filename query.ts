@@ -9,11 +9,11 @@
  */
 
 import { createHash } from "node:crypto";
-import type { QuotaConfig } from "./config.js";
-import { hostOf } from "./http.js";
-import { pickSource } from "./sources/index.js";
-import { type CandidateContext, listCandidates, resolveTarget } from "./targets.js";
-import type { AuthKind, Http, Report, Source, Target } from "./types.js";
+import type { QuotaConfig } from "./config.ts";
+import { hostOf } from "./http.ts";
+import { pickSource } from "./sources/index.ts";
+import { type CandidateContext, listCandidates, resolveTarget } from "./targets.ts";
+import type { AuthKind, Http, Report, Source, Target } from "./types.ts";
 
 export type RowState = { kind: "loading" } | { kind: "ok"; report: Report } | { kind: "error"; message: string };
 

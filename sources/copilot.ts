@@ -6,9 +6,9 @@
  * since that is what it trades for a new Copilot token.
  */
 
-import { QuotaError, epochMs, expectJson, num, obj, str } from "../http.js";
-import { emptyReport, type Report, type Source } from "../types.js";
-import { countDetail } from "./shared.js";
+import { QuotaError, epochMs, expectJson, num, obj, str } from "../http.ts";
+import { emptyReport, type Report, type Source } from "../types.ts";
+import { countDetail } from "./shared.ts";
 
 const QUOTAS: Array<[key: string, label: string]> = [
 	["premium_interactions", "高级请求"],

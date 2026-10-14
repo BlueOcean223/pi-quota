@@ -3,7 +3,7 @@
  * plain-text output.
  */
 
-import type { Amount } from "./types.js";
+import type { Amount } from "./types.ts";
 
 const SYMBOLS: Record<string, string> = { USD: "$", CNY: "¥" };
 

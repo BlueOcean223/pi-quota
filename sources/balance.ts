@@ -2,9 +2,9 @@
  * Vendors whose API key can read its own account balance with one GET.
  */
 
-import { arr, expectJson, hostOf, num, obj, originOf, QuotaError, str } from "../http.js";
-import { emptyReport, type Report, type Source } from "../types.js";
-import { bearer } from "./shared.js";
+import { arr, expectJson, hostOf, num, obj, originOf, QuotaError, str } from "../http.ts";
+import { emptyReport, type Report, type Source } from "../types.ts";
+import { bearer } from "./shared.ts";
 
 export const deepseek: Source = {
 	id: "deepseek",

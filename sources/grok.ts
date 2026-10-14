@@ -14,9 +14,9 @@
  * every `{ val }` amount is USD cents.
  */
 
-import { arr, epochMs, num, obj, QuotaError, serverMessage, str } from "../http.js";
-import { emptyReport, type HttpResult, type Meter, type Report, type Source } from "../types.js";
-import { bearer } from "./shared.js";
+import { arr, epochMs, num, obj, QuotaError, serverMessage, str } from "../http.ts";
+import { emptyReport, type HttpResult, type Meter, type Report, type Source } from "../types.ts";
+import { bearer } from "./shared.ts";
 
 const BILLING_URL = "https://cli-chat-proxy.grok.com/v1/billing";
 

@@ -15,13 +15,13 @@
  */
 
 import type { ExtensionAPI, ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
-import { loadConfig } from "./config.js";
-import { createHttp } from "./http.js";
-import { createPanel, type PanelResult } from "./panel.js";
-import { type QueryState, startQuery } from "./query.js";
-import { bodyLines, headerLine, plainStyle } from "./render.js";
-import { runSetup } from "./setup.js";
-import { type CandidateContext, providerIds } from "./targets.js";
+import { loadConfig } from "./config.ts";
+import { createHttp } from "./http.ts";
+import { createPanel, type PanelResult } from "./panel.ts";
+import { type QueryState, startQuery } from "./query.ts";
+import { bodyLines, headerLine, plainStyle } from "./render.ts";
+import { runSetup } from "./setup.ts";
+import { type CandidateContext, providerIds } from "./targets.ts";
 
 const PLAIN_WIDTH = 100;
 

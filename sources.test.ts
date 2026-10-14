@@ -5,17 +5,17 @@
  */
 
 import { describe, expect, test } from "bun:test";
-import { parseDeepseekBalance, parseOpenrouter } from "./sources/balance.js";
-import { parseClaudeUsage } from "./sources/claude.js";
-import { codex, parseCodexUsage } from "./sources/codex.js";
-import { copilot, parseCopilotUsage } from "./sources/copilot.js";
-import { parseKimiUsage, usageUrl } from "./sources/kimi.js";
-import { parseMinimaxRemains } from "./sources/minimax.js";
-import { opencodeGo, parseOpencodeGoUsage } from "./sources/opencode.js";
-import { checkAccount, NeedsUserId, parseSub2api, parseTokenUsage, quotaAmount, relay, unitFromStatus } from "./sources/relay.js";
-import { grok, parseGrokBilling } from "./sources/grok.js";
-import { zai } from "./sources/zai.js";
-import type { Http, HttpResult, Target } from "./types.js";
+import { parseDeepseekBalance, parseOpenrouter } from "./sources/balance.ts";
+import { parseClaudeUsage } from "./sources/claude.ts";
+import { codex, parseCodexUsage } from "./sources/codex.ts";
+import { copilot, parseCopilotUsage } from "./sources/copilot.ts";
+import { parseKimiUsage, usageUrl } from "./sources/kimi.ts";
+import { parseMinimaxRemains } from "./sources/minimax.ts";
+import { opencodeGo, parseOpencodeGoUsage } from "./sources/opencode.ts";
+import { checkAccount, NeedsUserId, parseSub2api, parseTokenUsage, quotaAmount, relay, unitFromStatus } from "./sources/relay.ts";
+import { grok, parseGrokBilling } from "./sources/grok.ts";
+import { zai } from "./sources/zai.ts";
+import type { Http, HttpResult, Target } from "./types.ts";
 
 const NOW = Date.UTC(2026, 9, 6, 4, 0);
 

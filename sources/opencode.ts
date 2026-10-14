@@ -7,9 +7,9 @@
  * not `ok` carries no trustworthy percent, so it is reported, not drawn.
  */
 
-import { epochMs, expectJson, num, obj, originOf, QuotaError, str } from "../http.js";
-import { emptyReport, type Report, type Source } from "../types.js";
-import { bearer } from "./shared.js";
+import { epochMs, expectJson, num, obj, originOf, QuotaError, str } from "../http.ts";
+import { emptyReport, type Report, type Source } from "../types.ts";
+import { bearer } from "./shared.ts";
 
 const WINDOWS: Array<[key: string, label: string]> = [
 	["rolling", "5 小时"],

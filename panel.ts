@@ -10,9 +10,9 @@
 
 import type { Theme } from "@earendil-works/pi-coding-agent";
 import { type Component, type KeybindingsManager, Key, matchesKey, parseKey, type TUI, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
-import type { QueryState } from "./query.js";
-import { bodyLines, headerLine } from "./render.js";
-import type { AccountSetup } from "./types.js";
+import type { QueryState } from "./query.ts";
+import { bodyLines, headerLine } from "./render.ts";
+import type { AccountSetup } from "./types.ts";
 
 /**
  * Rows pi keeps for itself while the panel is up: the transcript row

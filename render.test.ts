@@ -5,10 +5,10 @@
 
 import { describe, expect, test } from "bun:test";
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { bodyHeight, createPanel, HOST_ROWS, type PanelResult } from "./panel.js";
-import type { QueryState, Row } from "./query.js";
-import { bodyLines, headerLine, plainStyle } from "./render.js";
-import { SOURCES } from "./sources/index.js";
+import { bodyHeight, createPanel, HOST_ROWS, type PanelResult } from "./panel.ts";
+import type { QueryState, Row } from "./query.ts";
+import { bodyLines, headerLine, plainStyle } from "./render.ts";
+import { SOURCES } from "./sources/index.ts";
 
 const NOW = new Date(2026, 9, 6, 12, 0).getTime();
 

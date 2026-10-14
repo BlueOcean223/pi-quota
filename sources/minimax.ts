@@ -8,9 +8,9 @@
  * the console and MiniMax's own tooling read it that way.
  */
 
-import { arr, epochMs, expectJson, hostOf, num, obj, QuotaError, str } from "../http.js";
-import { emptyReport, type Http, type Meter, type Report, type Source } from "../types.js";
-import { bearer, countDetail, percentOf, windowLabel } from "./shared.js";
+import { arr, epochMs, expectJson, hostOf, num, obj, QuotaError, str } from "../http.ts";
+import { emptyReport, type Http, type Meter, type Report, type Source } from "../types.ts";
+import { bearer, countDetail, percentOf, windowLabel } from "./shared.ts";
 
 const PATHS = ["/v1/token_plan/remains", "/v1/api/openplatform/coding_plan/remains"];
 
